@@ -30,8 +30,19 @@ public class ReminderController {
         return reminderRepository.findById(id).orElse(null);
     }
 
-    // @PutMapping("/{id}")
-    //public Reminder updateReminder(@PathVariable Long id, @RequestBody Reminder reminderDetails) {
-        //Reminder reminder = reminderRepository.findById(id).orElse(null);
-    //}
+    @PutMapping("/{id}")
+    public Reminder updateReminder(@PathVariable Long id, @RequestBody Reminder reminderDetails) {
+        Reminder reminder = reminderRepository.findById(id).orElse(null);
+        if (reminder != null) {
+            reminder.setMessage(reminderDetails.getMessage());
+            reminder.setRemindDate(reminderDetails.getRemindDate());
+            return reminderRepository.save(reminder);
+        }
+        return null;
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteReminder(@PathVariable Long id) {
+        reminderRepository.deleteById(id);
+    }
 }
