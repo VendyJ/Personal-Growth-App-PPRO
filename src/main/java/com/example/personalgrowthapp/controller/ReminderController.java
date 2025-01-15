@@ -8,41 +8,46 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/reminders")
+@RestController // Označuje, že tato třída bude REST API kontroler
+@RequestMapping("/api/reminders") // Základní URL pro všechny metody tohoto kontroleru
 public class ReminderController {
 
-    @Autowired
+    @Autowired // Automatická injekce instance ReminderRepository
     private ReminderRepository reminderRepository;
 
+    // Získání všech připomínek
     @GetMapping
     public List<Reminder> getAllReminders() {
-        return reminderRepository.findAll();
+        return reminderRepository.findAll(); // Vrátí seznam všech připomínek
     }
 
+    // Vytvoření nové připomínky
     @PostMapping
     public Reminder createReminder(@RequestBody Reminder reminder) {
-        return reminderRepository.save(reminder);
+        return reminderRepository.save(reminder); // Uloží novou připomínku do databáze
     }
 
+    // Získání připomínky podle id
     @GetMapping("/{id}")
     public Reminder getReminderById(@PathVariable Long id) {
-        return reminderRepository.findById(id).orElse(null);
+        return reminderRepository.findById(id).orElse(null); // Najde připomínku, nebo vrátí null
     }
 
+    // Aktualizace připomínky podle id
     @PutMapping("/{id}")
-    public Reminder updateReminder(@PathVariable Long id, @RequestBody Reminder reminderDetails) {
-        Reminder reminder = reminderRepository.findById(id).orElse(null);
-        if (reminder != null) {
-            reminder.setMessage(reminderDetails.getMessage());
-            reminder.setRemindDate(reminderDetails.getRemindDate());
-            return reminderRepository.save(reminder);
-        }
-        return null;
+    public Reminder updateReminder(@PathVariable Long id, @RequestBody Reminder updatedReminder) {
+        return reminderRepository.findById(id).map(reminder -> {
+            reminder.setMessage(updatedReminder.getMessage());
+            reminder.setReminderTime(updatedReminder.getReminderTime());
+            reminder.setGoal(updatedReminder.getGoal());
+            reminder.setUser(updatedReminder.getUser());
+            return reminderRepository.save(reminder); // Aktualizuje připomínku
+        }).orElse(null);
     }
 
+    // Smazání připomínky podle id
     @DeleteMapping("/{id}")
     public void deleteReminder(@PathVariable Long id) {
-        reminderRepository.deleteById(id);
+        reminderRepository.deleteById(id); // Smaže připomínku podle id
     }
 }
