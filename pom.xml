@@ -2,22 +2,30 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+
+	<!-- Nastavení parent projektu pro Spring Boot -->
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.4.0</version>
+		<version>3.4.0</version> <!-- Verze Spring Boot -->
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
+
+	<!-- Základní informace o projektu -->
 	<groupId>com.example</groupId>
 	<artifactId>personal-growth-app</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Personal Growth App</name>
 	<description>Webová aplikace pro sledování osobního růstu</description>
+
+	<!-- Nastavení vlastností projektu -->
 	<properties>
-		<java.version>17</java.version>
+		<java.version>23</java.version> <!-- Verze Javy používaná v projektu -->
 	</properties>
+
+	<!-- Závislosti projektu -->
 	<dependencies>
-		<!-- Spring Boot Závislosti -->
+		<!-- Spring Boot závislosti -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -38,15 +46,18 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
+
+		<!-- Thymeleaf rozšíření pro Spring Security -->
 		<dependency>
 			<groupId>org.thymeleaf.extras</groupId>
 			<artifactId>thymeleaf-extras-springsecurity6</artifactId>
 		</dependency>
 
-		<!-- H2 Database -->
+		<!-- H2 databáze pro vývoj -->
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
+			<version>2.3.232</version>
 			<scope>runtime</scope>
 		</dependency>
 
@@ -54,7 +65,7 @@
 		<dependency>
 			<groupId>jakarta.validation</groupId>
 			<artifactId>jakarta.validation-api</artifactId>
-			<version>3.0.2</version>
+			<version>3.0.2</version> <!-- Verze Jakarta Validation -->
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate.validator</groupId>
@@ -66,27 +77,31 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
+			<scope>test</scope> <!-- Závislost použita pouze v testovacím prostředí -->
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-test</artifactId>
-			<scope>test</scope>
+			<scope>test</scope> <!-- Závislost použita pouze v testovacím prostředí -->
 		</dependency>
 	</dependencies>
 
+	<!-- Build nastavení -->
 	<build>
 		<plugins>
+			<!-- Plugin pro Spring Boot -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>
+
+	<!-- Repozitáře pro stahování závislostí -->
 	<repositories>
 		<repository>
 			<id>central</id>
-			<url>https://repo.maven.apache.org/maven2</url>
+			<url>https://repo.maven.apache.org/maven2</url> <!-- Maven Central Repository -->
 		</repository>
 	</repositories>
 </project>

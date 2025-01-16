@@ -2,6 +2,8 @@ package com.example.personalgrowthapp.controller;
 
 import com.example.personalgrowthapp.model.Goal;
 import com.example.personalgrowthapp.repository.GoalRepository;
+import com.example.personalgrowthapp.model.User;
+import com.example.personalgrowthapp.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +20,8 @@ public class GoalController {
 
     @Autowired // Automatické injektování repository třídy pro práci s databází
     private GoalRepository goalRepository;
+    @Autowired // Automatické injektování repository třídy pro práci s databází
+    private UserRepository userRepository;
 
     /**
      * Metoda pro získání všech cílů z databáze.
@@ -60,15 +64,23 @@ public class GoalController {
      */
     @PutMapping("/{id}") // HTTP PUT endpoint na "/api/goals/{id}"
     public Goal updateGoal(@PathVariable Long id, @RequestBody Goal updatedGoal) {
-        // Najde cíl podle ID a aktualizuje jeho hodnoty
         return goalRepository.findById(id).map(goal -> {
+            // Aktualizace běžných atributů cíle
             goal.setTitle(updatedGoal.getTitle());
             goal.setDescription(updatedGoal.getDescription());
             goal.setStatus(updatedGoal.getStatus());
             goal.setStartDate(updatedGoal.getStartDate());
             goal.setEndDate(updatedGoal.getEndDate());
-            return goalRepository.save(goal); // Uloží změny do databáze
-        }).orElse(null); // Pokud cíl neexistuje, vrátí null
+
+            // Pokud byl poslán uživatel, pokusíme se ho načíst z databáze
+            if (updatedGoal.getUser() != null && updatedGoal.getUser().getId() != null) {
+                User user = userRepository.findById(updatedGoal.getUser().getId())
+                        .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + updatedGoal.getUser().getId()));
+                goal.setUser(user); // Přiřadíme uživatele cíli
+            }
+
+            return goalRepository.save(goal); // Uložíme cíl s aktualizovanými daty
+        }).orElseThrow(() -> new IllegalArgumentException("Goal not found with id: " + id));
     }
 
     /**

@@ -16,7 +16,13 @@ public class PersonalGrowthAppApplication {
 	 * @param args argumenty příkazové řádky (mohou být použity pro konfiguraci aplikace při spuštění)
 	 */
 	public static void main(String[] args) {
+		// Logovací zpráva při startu aplikace
+		System.out.println("Starting Personal Growth App...");
+
 		// Spuštění aplikace pomocí SpringApplication
 		SpringApplication.run(PersonalGrowthAppApplication.class, args);
+
+		// Logovací zpráva po úspěšném spuštění aplikace
+		System.out.println("Personal Growth App has started successfully!");
 	}
 }
