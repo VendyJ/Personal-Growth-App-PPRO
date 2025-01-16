@@ -8,46 +8,76 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController // Označuje, že tato třída bude REST API kontroler
-@RequestMapping("/api/reminders") // Základní URL pro všechny metody tohoto kontroleru
+/**
+ * Třída ReminderController slouží jako REST API kontroler
+ * pro správu připomínek (Reminder). Obsahuje CRUD operace
+ * jako vytvoření, čtení, aktualizace a mazání připomínek.
+ */
+@RestController // Označuje třídu jako REST kontroler (vrací data ve formátu JSON)
+@RequestMapping("/api/reminders") // Mapuje všechny endpointy tohoto kontroleru na "/api/reminders"
 public class ReminderController {
 
-    @Autowired // Automatická injekce instance ReminderRepository
+    @Autowired // Automatická injekce instance třídy ReminderRepository
     private ReminderRepository reminderRepository;
 
-    // Získání všech připomínek
-    @GetMapping
+    /**
+     * Metoda pro získání všech připomínek z databáze.
+     *
+     * @return seznam všech připomínek (List<Reminder>)
+     */
+    @GetMapping // HTTP GET endpoint na "/api/reminders"
     public List<Reminder> getAllReminders() {
-        return reminderRepository.findAll(); // Vrátí seznam všech připomínek
+        return reminderRepository.findAll(); // Vrátí všechny připomínky uložené v databázi
     }
 
-    // Vytvoření nové připomínky
-    @PostMapping
+    /**
+     * Metoda pro vytvoření nové připomínky a její uložení do databáze.
+     *
+     * @param reminder Nová připomínka zaslaná v těle požadavku (JSON)
+     * @return uložená připomínka (včetně automaticky generovaného ID)
+     */
+    @PostMapping // HTTP POST endpoint na "/api/reminders"
     public Reminder createReminder(@RequestBody Reminder reminder) {
         return reminderRepository.save(reminder); // Uloží novou připomínku do databáze
     }
 
-    // Získání připomínky podle id
-    @GetMapping("/{id}")
+    /**
+     * Metoda pro získání konkrétní připomínky podle jejího ID.
+     *
+     * @param id ID připomínky z URL cesty
+     * @return nalezená připomínka nebo null, pokud neexistuje
+     */
+    @GetMapping("/{id}") // HTTP GET endpoint na "/api/reminders/{id}"
     public Reminder getReminderById(@PathVariable Long id) {
-        return reminderRepository.findById(id).orElse(null); // Najde připomínku, nebo vrátí null
+        return reminderRepository.findById(id).orElse(null); // Najde připomínku podle ID, pokud neexistuje, vrátí null
     }
 
-    // Aktualizace připomínky podle id
-    @PutMapping("/{id}")
+    /**
+     * Metoda pro aktualizaci existující připomínky podle jejího ID.
+     *
+     * @param id ID připomínky, která má být aktualizována
+     * @param updatedReminder Aktualizované údaje připomínky (JSON)
+     * @return aktualizovaná připomínka nebo null, pokud nebyla nalezena
+     */
+    @PutMapping("/{id}") // HTTP PUT endpoint na "/api/reminders/{id}"
     public Reminder updateReminder(@PathVariable Long id, @RequestBody Reminder updatedReminder) {
+        // Najde připomínku podle ID a aktualizuje její hodnoty
         return reminderRepository.findById(id).map(reminder -> {
-            reminder.setMessage(updatedReminder.getMessage());
-            reminder.setReminderTime(updatedReminder.getReminderTime());
-            reminder.setGoal(updatedReminder.getGoal());
-            reminder.setUser(updatedReminder.getUser());
-            return reminderRepository.save(reminder); // Aktualizuje připomínku
-        }).orElse(null);
+            reminder.setMessage(updatedReminder.getMessage()); // Aktualizuje zprávu
+            reminder.setReminderTime(updatedReminder.getReminderTime()); // Aktualizuje čas připomínky
+            reminder.setGoal(updatedReminder.getGoal()); // Aktualizuje spojený cíl
+            reminder.setUser(updatedReminder.getUser()); // Aktualizuje uživatele spojeného s připomínkou
+            return reminderRepository.save(reminder); // Uloží změny do databáze
+        }).orElse(null); // Pokud připomínka neexistuje, vrátí null
     }
 
-    // Smazání připomínky podle id
-    @DeleteMapping("/{id}")
+    /**
+     * Metoda pro smazání připomínky podle jejího ID.
+     *
+     * @param id ID připomínky, která má být smazána
+     */
+    @DeleteMapping("/{id}") // HTTP DELETE endpoint na "/api/reminders/{id}"
     public void deleteReminder(@PathVariable Long id) {
-        reminderRepository.deleteById(id); // Smaže připomínku podle id
+        reminderRepository.deleteById(id); // Smaže připomínku podle ID
     }
 }
