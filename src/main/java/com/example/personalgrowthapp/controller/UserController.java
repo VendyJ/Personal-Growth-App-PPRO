@@ -4,79 +4,77 @@ import com.example.personalgrowthapp.model.User;
 import com.example.personalgrowthapp.repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 /**
  * Třída UserController slouží jako REST API kontroler
  * pro správu uživatelů (User). Obsahuje CRUD operace
- * jako vytvoření, čtení, aktualizace a mazání uživatelů.
+ * a zajišťuje bezpečnost a validaci dat.
  */
-@RestController // Označuje třídu jako REST kontroler (vrací data ve formátu JSON)
-@RequestMapping("/api/users") // Mapuje všechny endpointy tohoto kontroleru na "/api/users"
+@RestController
+@RequestMapping("/api/users")
+@Validated
 public class UserController {
 
-    @Autowired // Automatická injekce instance třídy UserRepository
+    @Autowired
     private UserRepository userRepository;
 
-    /**
-     * Metoda pro získání všech uživatelů z databáze.
-     *
-     * @return seznam všech uživatelů (List<User>)
-     */
-    @GetMapping // HTTP GET endpoint na "/api/users"
-    public List<User> getAllUsers() {
-        return userRepository.findAll(); // Vrátí všechny uživatele uložené v databázi
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    @GetMapping
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return ResponseEntity.ok(users);
     }
 
-    /**
-     * Metoda pro vytvoření nového uživatele a jeho uložení do databáze.
-     *
-     * @param user Nový uživatel zaslaný v těle požadavku (JSON)
-     * @return uložený uživatel (včetně automaticky generovaného ID)
-     */
-    @PostMapping // HTTP POST endpoint na "/api/users"
-    public User createUser(@RequestBody User user) {
-        return userRepository.save(user); // Uloží nového uživatele do databáze
+    @PostMapping
+    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
+        // Kontrola duplicity uživatelského jména a emailu
+        if (userRepository.existsByUsername(user.getUsername())) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        if (userRepository.existsByEmail(user.getEmail())) {
+            return ResponseEntity.badRequest().body(null);
+        }
+
+        // Hashování hesla
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.ok(savedUser);
     }
 
-    /**
-     * Metoda pro získání konkrétního uživatele podle jeho ID.
-     *
-     * @param id ID uživatele z URL cesty
-     * @return nalezený uživatel nebo null, pokud neexistuje
-     */
-    @GetMapping("/{id}") // HTTP GET endpoint na "/api/users/{id}"
-    public User getUserById(@PathVariable Long id) {
-        return userRepository.findById(id).orElse(null); // Najde uživatele podle ID, pokud neexistuje, vrátí null
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        return userRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * Metoda pro aktualizaci existujícího uživatele podle jeho ID.
-     *
-     * @param id ID uživatele, který má být aktualizován
-     * @param updatedUser Aktualizované údaje uživatele (JSON)
-     * @return aktualizovaný uživatel nebo null, pokud nebyl nalezen
-     */
-    @PutMapping("/{id}") // HTTP PUT endpoint na "/api/users/{id}"
-    public User updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
-        // Najde uživatele podle ID a aktualizuje jeho hodnoty
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody User updatedUser) {
         return userRepository.findById(id).map(user -> {
-            user.setUsername(updatedUser.getUsername()); // Aktualizuje uživatelské jméno
-            user.setPassword(updatedUser.getPassword()); // Aktualizuje heslo
-            user.setEmail(updatedUser.getEmail()); // Aktualizuje email
-            return userRepository.save(user); // Uloží změny do databáze
-        }).orElse(null); // Pokud uživatel neexistuje, vrátí null
+            user.setUsername(updatedUser.getUsername());
+            user.setPassword(passwordEncoder.encode(updatedUser.getPassword())); // Hashování hesla
+            user.setEmail(updatedUser.getEmail());
+            User savedUser = userRepository.save(user);
+            return ResponseEntity.ok(savedUser);
+        }).orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * Metoda pro smazání uživatele podle jeho ID.
-     *
-     * @param id ID uživatele, který má být smazán
-     */
-    @DeleteMapping("/{id}") // HTTP DELETE endpoint na "/api/users/{id}"
-    public void deleteUser(@PathVariable Long id) {
-        userRepository.deleteById(id); // Smaže uživatele podle ID
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        if (!userRepository.existsById(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        userRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

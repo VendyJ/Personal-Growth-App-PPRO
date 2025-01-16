@@ -2,65 +2,59 @@ package com.example.personalgrowthapp.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import org.springframework.scheduling.config.Task;
+
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
  * Třída Goal reprezentuje jeden cíl uživatele v aplikaci.
  * Obsahuje informace o názvu, popisu, stavu, datu začátku a konce,
- * vztahu k uživateli, který cíl vytvořil, a připomenutích spojených s cílem.
+ * vztahu k uživateli, který cíl vytvořil, a další propojené entity.
  */
-@Entity // Označuje tuto třídu jako entitu (bude se mapovat do tabulky v databázi).
+@Entity
 public class Goal {
 
-    @Id // Označuje primární klíč tabulky.
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Primární klíč se bude generovat automaticky databází.
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull // Tento atribut nesmí být null (prázdný).
-    @Size(max = 255) // Maximální délka názvu je 255 znaků.
+    @NotNull
+    @Size(max = 255)
     private String title;
 
-    @Column(length = 1000) // Popis cíle má maximální délku 1000 znaků.
+    @Column(length = 1000)
     private String description;
 
-    @NotNull // Stav cíle musí být vždy vyplněný (např. "rozpracovaný", "dokončený").
-    private String status;
+    @NotNull
+    @Enumerated(EnumType.STRING) // Použití výčtu pro omezení možných hodnot
+    private GoalStatus status;
 
-    @Temporal(TemporalType.DATE) // Tento atribut je typu Date a ukládá pouze datum (bez času).
-    @PastOrPresent // Datum začátku cíle musí být v minulosti nebo dnešní datum.
-    private Date startDate;
+    @NotNull
+    @PastOrPresent
+    private LocalDate startDate;
 
-    @Temporal(TemporalType.DATE) // Tento atribut je typu Date a ukládá pouze datum (bez času).
-    @FutureOrPresent // Datum konce cíle musí být v budoucnosti nebo dnešní datum.
-    private Date endDate;
+    @NotNull
+    @FutureOrPresent
+    private LocalDate endDate;
 
-    @ManyToOne // Vztah "mnoho cílů patří jednomu uživateli".
-    @JoinColumn(name = "user_id") // Název sloupce, který se bude používat jako cizí klíč k tabulce uživatelů.
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
-    // Vztah "jeden cíl má mnoho připomenutí".
-    // MappedBy říká, že připomenutí odkazují na tento cíl (přes atribut "goal" v entitě Reminder).
-    // CascadeType.ALL zajistí, že operace s cílem (např. smazání) se projeví i na připomenutích.
-    // OrphanRemoval zajistí automatické smazání připomenutí, které byly odebrány ze seznamu.
-    private List<Reminder> reminders = new ArrayList<>(); // Inicializace seznamu připomenutí (aby nebyl null).
+    private List<Reminder> reminders = new ArrayList<>();
 
-    // Konstruktor bez parametrů je potřeba pro JPA (Java Persistence API).
+    @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Task> tasks = new ArrayList<>();
+
+    @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProgressReport> progressReports = new ArrayList<>();
+
     public Goal() {}
 
-    /**
-     * Konstruktor s parametry pro vytvoření cíle s výchozími hodnotami.
-     *
-     * @param title       Název cíle.
-     * @param description Popis cíle.
-     * @param status      Stav cíle (např. "rozpracovaný").
-     * @param startDate   Datum začátku cíle.
-     * @param endDate     Datum konce cíle.
-     * @param user        Uživatel, kterému cíl patří.
-     */
-    public Goal(String title, String description, String status, Date startDate, Date endDate, User user) {
+    public Goal(String title, String description, GoalStatus status, LocalDate startDate, LocalDate endDate, User user) {
         this.title = title;
         this.description = description;
         this.status = status;
@@ -69,7 +63,7 @@ public class Goal {
         this.user = user;
     }
 
-    // Gettery a settery umožňují přístup a nastavení hodnot atributů.
+    // Gettery a settery
 
     public Long getId() {
         return id;
@@ -95,27 +89,27 @@ public class Goal {
         this.description = description;
     }
 
-    public String getStatus() {
+    public GoalStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(GoalStatus status) {
         this.status = status;
     }
 
-    public Date getStartDate() {
+    public LocalDate getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(Date startDate) {
+    public void setStartDate(LocalDate startDate) {
         this.startDate = startDate;
     }
 
-    public Date getEndDate() {
+    public LocalDate getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(Date endDate) {
+    public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
     }
 
@@ -135,22 +129,40 @@ public class Goal {
         this.reminders = reminders;
     }
 
-    /**
-     * Metoda toString vrací textovou reprezentaci objektu Goal.
-     * Používá se např. pro ladění.
-     *
-     * @return Textová reprezentace cíle.
-     */
+    public List<Task> getTasks() {
+        return tasks;
+    }
+
+    public void setTasks(List<Task> tasks) {
+        this.tasks = tasks;
+    }
+
+    public List<ProgressReport> getProgressReports() {
+        return progressReports;
+    }
+
+    public void setProgressReports(List<ProgressReport> progressReports) {
+        this.progressReports = progressReports;
+    }
+
     @Override
     public String toString() {
         return "Goal{" +
                 "id=" + id +
                 ", title='" + title + '\'' +
                 ", description='" + description + '\'' +
-                ", status='" + status + '\'' +
+                ", status=" + status +
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
                 ", user=" + (user != null ? user.getUsername() : "No User Assigned") +
                 '}';
+    }
+
+    // Výčet pro možné stavy cíle
+    public enum GoalStatus {
+        IN_PROGRESS,
+        COMPLETED,
+        ON_HOLD,
+        CANCELLED
     }
 }

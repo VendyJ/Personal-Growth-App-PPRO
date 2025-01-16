@@ -1,60 +1,51 @@
 package com.example.personalgrowthapp.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * Třída Reminder reprezentuje připomenutí v aplikaci.
  * Obsahuje informace o zprávě připomenutí, datu a času připomenutí
  * a vztahy k uživateli a cíli, ke kterým připomenutí patří.
  */
-@Entity // Označuje třídu jako entitu, která se mapuje na tabulku v databázi
+@Entity
 public class Reminder {
 
-    @Id // Primární klíč tabulky
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Primární klíč se bude generovat automaticky databází
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull // Zpráva nesmí být null
-    @Size(max = 255) // Maximální délka zprávy je 255 znaků
+    @NotNull
+    @Size(max = 255)
     private String message;
 
-    @NotNull // Datum a čas připomenutí nesmí být null
-    @Temporal(TemporalType.TIMESTAMP) // Mapování na SQL typ TIMESTAMP
-    private Date reminderTime;
+    @NotNull
+    @FutureOrPresent // Připomenutí musí být v současnosti nebo budoucnosti
+    private LocalDateTime reminderTime;
 
-    @NotNull // Každé připomenutí musí být přiřazeno k uživateli
-    @ManyToOne // Vztah: více připomenutí může patřit jednomu uživateli
-    @JoinColumn(name = "user_id", nullable = false) // Název sloupce v databázi
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @NotNull // Každé připomenutí musí být přiřazeno k cíli
-    @ManyToOne // Vztah: více připomenutí může být spojeno s jedním cílem
-    @JoinColumn(name = "goal_id", nullable = false) // Název sloupce v databázi
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "goal_id", nullable = false)
     private Goal goal;
 
-    // Konstruktor bez parametrů
     public Reminder() {}
 
-    /**
-     * Konstruktor s parametry.
-     *
-     * @param message zpráva připomenutí
-     * @param reminderTime datum a čas připomenutí
-     * @param user uživatel, který vlastní připomenutí
-     * @param goal cíl, ke kterému připomenutí patří
-     */
-    public Reminder(String message, Date reminderTime, User user, Goal goal) {
+    public Reminder(String message, LocalDateTime reminderTime, User user, Goal goal) {
         this.message = message;
         this.reminderTime = reminderTime;
         this.user = user;
         this.goal = goal;
     }
 
-    // Gettery a settery
     public Long getId() {
         return id;
     }
@@ -71,11 +62,11 @@ public class Reminder {
         this.message = message;
     }
 
-    public Date getReminderTime() {
+    public LocalDateTime getReminderTime() {
         return reminderTime;
     }
 
-    public void setReminderTime(Date reminderTime) {
+    public void setReminderTime(LocalDateTime reminderTime) {
         this.reminderTime = reminderTime;
     }
 
