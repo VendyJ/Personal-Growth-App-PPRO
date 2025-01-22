@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.ui.Model;
 
 import jakarta.validation.Valid;
 import java.util.List;
@@ -17,8 +19,8 @@ import java.util.List;
  * pro správu uživatelů (User). Obsahuje CRUD operace
  * a zajišťuje bezpečnost a validaci dat.
  */
-@RestController
-@RequestMapping("/api/users")
+@Controller
+@RequestMapping("/users")
 @Validated
 public class UserController {
 
@@ -76,5 +78,30 @@ public class UserController {
         }
         userRepository.deleteById(id);
         return ResponseEntity.noContent().build();
+    }
+
+    //FRONTEND
+
+    @GetMapping("/users")
+    public String showUsers(Model model) {
+        model.addAttribute("users", userRepository.findAll());
+        return "users";
+    }
+
+    @GetMapping("/users/new")
+    public String showCreateUserForm() {
+        return "create_user";
+    }
+
+    @PostMapping("/users")
+    public String createUser(@RequestParam String username,
+                             @RequestParam String email,
+                             @RequestParam String password) {
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+        userRepository.save(user);
+        return "redirect:/users";
     }
 }

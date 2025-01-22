@@ -8,10 +8,10 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 /**
- * Třída Task reprezentuje úkol spojený s cílem uživatele.
+ * Třída GoalTask reprezentuje úkol spojený s cílem uživatele.
  */
 @Entity
-public class Task {
+public class GoalTask {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,9 +35,9 @@ public class Task {
     @JoinColumn(name = "goal_id", nullable = false)
     private Goal goal;
 
-    public Task() {}
+    public GoalTask() {}
 
-    public Task(String title, String description, LocalDate deadline, boolean isCompleted, Goal goal) {
+    public GoalTask(String title, String description, LocalDate deadline, boolean isCompleted, Goal goal) {
         this.title = title;
         this.description = description;
         this.deadline = deadline;
@@ -95,7 +95,7 @@ public class Task {
 
     @Override
     public String toString() {
-        return "Task{" +
+        return "GoalTask{" +
                 "id=" + id +
                 ", title='" + title + '\'' +
                 ", description='" + description + '\'' +

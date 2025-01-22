@@ -6,6 +6,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 /**
  * Konfigurační třída pro zabezpečení aplikace pomocí Spring Security.
@@ -14,6 +15,11 @@ import org.springframework.security.config.Customizer;
 @Configuration // Označuje tuto třídu jako Spring konfigurační třídu
 @EnableWebSecurity // Povolení Spring Security
 public class SecurityConfig {
+
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     /**
      * Definuje filtr zabezpečení, který určuje, jak budou požadavky na aplikaci ověřovány.

@@ -2,6 +2,7 @@ package com.example.personalgrowthapp.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import com.example.personalgrowthapp.model.GoalTask;
 import org.springframework.scheduling.config.Task;
 
 import java.time.LocalDate;
@@ -47,7 +48,7 @@ public class Goal {
     private List<Reminder> reminders = new ArrayList<>();
 
     @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Task> tasks = new ArrayList<>();
+    private List<GoalTask> tasks = new ArrayList<>();
 
     @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProgressReport> progressReports = new ArrayList<>();
@@ -129,11 +130,11 @@ public class Goal {
         this.reminders = reminders;
     }
 
-    public List<Task> getTasks() {
+    public List<GoalTask> getTasks() {
         return tasks;
     }
 
-    public void setTasks(List<Task> tasks) {
+    public void setTasks(List<GoalTask> tasks) {
         this.tasks = tasks;
     }
 

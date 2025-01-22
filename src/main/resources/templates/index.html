@@ -1,12 +1,16 @@
 <!DOCTYPE html>
-<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout.html}">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Ahoj</title>
+    <title>Personal Growth App</title>
 </head>
 <body>
-<section layout:fragment="content">
-    <p>Vítejte v aplikaci.</p>
-</section>
+<h1>Vítejte v aplikaci pro osobní růst!</h1>
+<nav>
+    <ul>
+        <li><a th:href="@{/users}">Uživatelé</a></li>
+        <li><a th:href="@{/goals}">Cíle</a></li>
+        <li><a th:href="@{/habits}">Zvyky</a></li>
+    </ul>
+</nav>
 </body>
 </html>
