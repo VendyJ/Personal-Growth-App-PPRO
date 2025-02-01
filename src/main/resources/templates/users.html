@@ -1,26 +1,157 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="cs">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Seznam uživatelů</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-<h1>Seznam uživatelů</h1>
-<table>
+<body class="container mt-4">
+<h2 class="text-center">Seznam uživatelů</h2>
+
+<table class="table table-striped">
     <thead>
     <tr>
         <th>ID</th>
         <th>Uživatelské jméno</th>
-        <th>Email</th>
+        <th>E-mail</th>
+        <th>Role</th>
+        <th>Cíle</th>
+        <th>Akce</th>
     </tr>
     </thead>
-    <tbody>
-    <tr th:each="user : ${users}">
-        <td th:text="${user.id}"></td>
-        <td th:text="${user.username}"></td>
-        <td th:text="${user.email}"></td>
-    </tr>
+    <tbody id="userTableBody">
+    <tr><td colspan="6" class="text-center">Načítání...</td></tr>
     </tbody>
 </table>
-<a th:href="@{/users/new}">Přidat nového uživatele</a>
+
+<!-- Modální okno pro detail uživatele -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detail uživatele</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>ID:</strong> <span id="userId"></span></p>
+                <p><strong>Uživatelské jméno:</strong> <span id="userName"></span></p>
+                <p><strong>E-mail:</strong> <span id="userEmail"></span></p>
+                <p><strong>Role:</strong> <span id="userRole"></span></p>
+                <p><strong>Cíle:</strong> <span id="userGoals"></span></p>
+
+                <!-- Formulář pro přiřazení cíle -->
+                <form id="assignGoalForm">
+                    <input type="hidden" id="selectedUserId">
+                    <label for="goalSelect">Přiřadit cíl:</label>
+                    <select id="goalSelect" class="form-select"></select>
+                    <button type="submit" class="btn btn-primary mt-2">Přiřadit cíl</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tbody = document.getElementById("userTableBody");
+
+        // ✅ Načtení uživatelů
+        fetch("/users/api")
+            .then(response => response.json())
+            .then(users => {
+                tbody.innerHTML = ""; // Odstraníme původní zprávu o načítání
+
+                if (users.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center">Žádní uživatelé</td></tr>`;
+                    return;
+                }
+
+                users.forEach(user => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${user.id}</td>
+                        <td><a href="#" class="user-link" data-id="${user.id}">${user.username}</a></td>
+                        <td>${user.email || "Neznámý"}</td>
+                        <td>${user.role || "Neznámá"}</td>
+                        <td>${(user.goals && user.goals.length) ? user.goals.map(goal => goal.name).join(", ") : "Žádné cíle"}</td>
+                        <td><button class="btn btn-danger btn-sm delete-btn" data-id="${user.id}">Smazat</button></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error("❌ Chyba při načítání uživatelů:", error);
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Chyba při načítání dat</td></tr>`;
+            });
+
+        // ✅ Event delegation pro kliknutí na uživatelské jméno
+        document.addEventListener("click", function (e) {
+            if (e.target.classList.contains("user-link")) {
+                e.preventDefault();
+                const userId = e.target.dataset.id;
+
+                fetch(`/users/${userId}`)
+                    .then(response => response.json())
+                    .then(user => {
+                        console.log("ℹ️ Načtený uživatel:", user); // Debugging
+
+                        // 🛠 Oprava: Ověření existence user.goals
+                        const userGoals = user.goals ? user.goals.map(goal => goal.name).join(", ") : "Žádné cíle";
+
+                        document.getElementById("userId").textContent = user.id;
+                        document.getElementById("userName").textContent = user.username;
+                        document.getElementById("userEmail").textContent = user.email || "Neznámý";
+                        document.getElementById("userRole").textContent = user.role || "Neznámá";
+                        document.getElementById("userGoals").textContent = userGoals;
+                        document.getElementById("selectedUserId").value = user.id;
+
+                        // ✅ Opravené načítání cílů do dropdown menu
+                        fetch("/goals/api")
+                            .then(response => response.json())
+                            .then(goals => {
+                                const goalSelect = document.getElementById("goalSelect");
+                                goalSelect.innerHTML = goals.map(goal => `<option value="${goal.id}">${goal.name}</option>`).join("");
+                            });
+
+                        new bootstrap.Modal(document.getElementById("userModal")).show();
+                    })
+                    .catch(error => {
+                        console.error("❌ Chyba při načítání detailu uživatele:", error);
+                    });
+            }
+        });
+
+        // ✅ Přiřazení cíle uživateli
+        document.getElementById("assignGoalForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const userId = document.getElementById("selectedUserId").value;
+            const goalId = document.getElementById("goalSelect").value;
+
+            fetch(`/users/${userId}/add-goal`, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `goalId=${goalId}`
+            }).then(() => location.reload());
+        });
+
+        // ✅ Přidání event listenerů na mazání uživatelů
+        document.addEventListener("click", function (e) {
+            if (e.target.classList.contains("delete-btn")) {
+                const userId = e.target.dataset.id;
+                if (confirm("Opravdu chcete smazat tohoto uživatele?")) {
+                    fetch(`/users/${userId}`, { method: "DELETE" })
+                        .then(response => {
+                            if (response.ok) {
+                                e.target.closest("tr").remove();
+                            }
+                        });
+                }
+            }
+        });
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

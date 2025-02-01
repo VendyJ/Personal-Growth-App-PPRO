@@ -7,8 +7,8 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.4.0</version> <!-- Verze Spring Boot -->
-		<relativePath/> <!-- lookup parent from repository -->
+		<version>3.4.0</version>
+		<relativePath/>
 	</parent>
 
 	<!-- Základní informace o projektu -->
@@ -20,7 +20,7 @@
 
 	<!-- Nastavení vlastností projektu -->
 	<properties>
-		<java.version>23</java.version> <!-- Verze Javy používaná v projektu -->
+		<java.version>23</java.version>
 	</properties>
 
 	<!-- Závislosti projektu -->
@@ -33,6 +33,10 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-crypto</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -53,11 +57,11 @@
 			<artifactId>thymeleaf-extras-springsecurity6</artifactId>
 		</dependency>
 
-		<!-- H2 databáze pro vývoj -->
+		<!-- MySQL JDBC Driver -->
 		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<version>2.3.232</version>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>8.0.23</version>  <!-- Aktuální verze -->
 			<scope>runtime</scope>
 		</dependency>
 
@@ -65,7 +69,7 @@
 		<dependency>
 			<groupId>jakarta.validation</groupId>
 			<artifactId>jakarta.validation-api</artifactId>
-			<version>3.0.2</version> <!-- Verze Jakarta Validation -->
+			<version>3.0.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate.validator</groupId>
@@ -89,12 +93,12 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope> <!-- Závislost použita pouze v testovacím prostředí -->
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-test</artifactId>
-			<scope>test</scope> <!-- Závislost použita pouze v testovacím prostředí -->
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
@@ -113,7 +117,7 @@
 	<repositories>
 		<repository>
 			<id>central</id>
-			<url>https://repo.maven.apache.org/maven2</url> <!-- Maven Central Repository -->
+			<url>https://repo.maven.apache.org/maven2</url>
 		</repository>
 	</repositories>
 </project>

@@ -8,33 +8,40 @@ import java.util.Optional;
 
 /**
  * Rozhraní UserRepository slouží jako úložiště pro práci s entitou User.
- * Rozšiřuje JpaRepository, což poskytuje základní metody pro CRUD operace.
- * Anotace @Repository označuje tuto třídu jako Spring komponentu pro přístup k databázi.
+ * Poskytuje metody pro vyhledávání a validaci uživatelů.
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
      * Vyhledá uživatele podle uživatelského jména.
-     * Spring Data JPA automaticky vygeneruje SQL dotaz na základě názvu metody.
      *
      * @param username uživatelské jméno
-     * @return Optional obsahující nalezeného uživatele, nebo prázdné, pokud nebyl nalezen
+     * @return Optional obsahující nalezeného uživatele nebo prázdné, pokud nebyl nalezen
      */
     Optional<User> findByUsername(String username);
 
     /**
      * Vyhledá uživatele podle e-mailové adresy.
-     * Tuto metodu lze použít například pro validaci při registraci.
      *
      * @param email e-mailová adresa
-     * @return Optional obsahující nalezeného uživatele, nebo prázdné, pokud nebyl nalezen
+     * @return Optional obsahující nalezeného uživatele nebo prázdné, pokud nebyl nalezen
      */
     Optional<User> findByEmail(String email);
 
+    /**
+     * Ověří, zda už existuje uživatel s daným uživatelským jménem.
+     *
+     * @param username uživatelské jméno
+     * @return true, pokud uživatel existuje, jinak false
+     */
     boolean existsByUsername(String username);
 
+    /**
+     * Ověří, zda už existuje uživatel s daným e-mailem.
+     *
+     * @param email e-mailová adresa
+     * @return true, pokud uživatel existuje, jinak false
+     */
     boolean existsByEmail(String email);
-
-    // Další metody specifické pro entitu User lze přidat zde.
 }

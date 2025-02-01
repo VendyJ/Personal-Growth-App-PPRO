@@ -1,0 +1,18 @@
+<!-- edit-goal.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Editovat cíl</title>
+</head>
+<body>
+<h1>Editace cíle</h1>
+
+<form th:action="@{/goals/edit/{id}(id=${goal.id})}" th:object="${goal}" method="post">
+    <label for="name">Název:</label>
+    <input type="text" id="name" th:field="*{name}" required/>
+    <button type="submit">Uložit změny</button>
+</form>
+
+<a href="/goals">Zpět na seznam cílů</a>
+</body>
+</html>

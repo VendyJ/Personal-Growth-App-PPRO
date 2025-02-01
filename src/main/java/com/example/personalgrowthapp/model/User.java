@@ -1,21 +1,24 @@
 package com.example.personalgrowthapp.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
- * Třída User reprezentuje uživatele aplikace.
- * Obsahuje informace o uživatelském jméně, hesle, emailu,
- * a vztahy k cílům, připomenutím a zvykům.
+ * Třída User reprezentuje uživatele aplikace a implementuje UserDetails pro integraci se Spring Security.
  */
 @Entity
 @Table(name = "app_user") // Změna názvu tabulky, aby se předešlo konfliktům
-public class User {
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,7 +40,16 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+    @Column(nullable = false)
+    private boolean enabled = true;
+
+    // ✅ Vztah 1:N mezi uživatelem a cíli
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore //zabraňuje nekonečné serializaci
     private List<Goal> goals;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -47,24 +59,48 @@ public class User {
     private List<Habit> habits;
 
     /**
-     * Konstruktor bez parametrů (vyžadován JPA).
+     * Výchozí konstruktor.
      */
     public User() {}
 
     /**
-     * Konstruktor s parametry pro snadnější vytváření instancí.
-     *
-     * @param username uživatelské jméno
-     * @param password heslo (je automaticky hashováno při použití setteru)
-     * @param email emailová adresa
+     * Konstruktor s parametry pro vytvoření uživatele.
      */
-    public User(String username, String password, String email) {
+    public User(String username, String password, String email, Role role) {
         this.username = username;
-        setPassword(password); // Nastavení hesla přes setter pro hashování
+        setPassword(password);
         this.email = email;
+        this.role = role;
     }
 
-    // Gettery a settery
+    // 🛡 SPRING SECURITY METODY - IMPLEMENTACE USERDETAILS
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(role);
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    // ✅ GETTERY A SETTERY
 
     public Long getId() {
         return id;
@@ -87,13 +123,10 @@ public class User {
     }
 
     /**
-     * Nastaví heslo. Heslo je automaticky hashováno pomocí BCrypt.
-     *
-     * @param password čisté heslo
+     * Nastaví heslo. Heslo je hashováno pouze při vytvoření uživatele.
      */
     public void setPassword(String password) {
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        this.password = encoder.encode(password);
+        this.password = new BCryptPasswordEncoder().encode(password);
     }
 
     public String getEmail() {
@@ -104,12 +137,44 @@ public class User {
         this.email = email;
     }
 
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    public boolean isEnabledAccount() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
     public List<Goal> getGoals() {
         return goals;
     }
 
     public void setGoals(List<Goal> goals) {
         this.goals = goals;
+    }
+
+    /**
+     * Přidá nový cíl k uživateli.
+     */
+    public void addGoal(Goal goal) {
+        goals.add(goal);
+        goal.setUser(this);
+    }
+
+    /**
+     * Odebere cíl od uživatele.
+     */
+    public void removeGoal(Goal goal) {
+        goals.remove(goal);
+        goal.setUser(null);
     }
 
     public List<Reminder> getReminders() {

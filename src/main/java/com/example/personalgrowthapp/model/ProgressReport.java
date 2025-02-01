@@ -89,7 +89,7 @@ public class ProgressReport {
                 ", date=" + date +
                 ", description='" + description + '\'' +
                 ", progressPercentage=" + progressPercentage +
-                ", goal=" + (goal != null ? goal.getTitle() : "No Goal Assigned") +
+                ", goal=" + (goal != null ? goal.getName() : "No Goal Assigned") +
                 '}';
     }
 }

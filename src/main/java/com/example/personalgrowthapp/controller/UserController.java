@@ -1,107 +1,152 @@
 package com.example.personalgrowthapp.controller;
 
 import com.example.personalgrowthapp.model.User;
-import com.example.personalgrowthapp.repository.UserRepository;
+import com.example.personalgrowthapp.model.Role;
+import com.example.personalgrowthapp.model.Goal;
+import com.example.personalgrowthapp.service.UserService;
+import com.example.personalgrowthapp.service.GoalService;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
-
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * Třída UserController slouží jako REST API kontroler
- * pro správu uživatelů (User). Obsahuje CRUD operace
- * a zajišťuje bezpečnost a validaci dat.
+ * Třída UserController slouží jako kontroler pro správu uživatelů.
+ * Obsahuje REST API pro CRUD operace a také frontendovou část pro zobrazení seznamu uživatelů.
  */
 @Controller
 @RequestMapping("/users")
 @Validated
 public class UserController {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserService userService;
+    private final GoalService goalService;
 
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
+    public UserController(UserService userService, GoalService goalService) {
+        this.userService = userService;
+        this.goalService = goalService;
+    }
 
+    // ✅ Zobrazení seznamu uživatelů (HTML stránka)
     @GetMapping
+    public String showUsersPage(Model model) {
+        model.addAttribute("users", userService.getAllUsers());
+        model.addAttribute("goals", goalService.getAllGoals()); // Přidání seznamu cílů
+        return "users"; // Odkazuje na users.html v šablonách
+    }
+
+    // ✅ API pro získání všech uživatelů (AJAX volání z frontendové stránky)
+    @GetMapping("/api")
     public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userRepository.findAll();
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    @PostMapping
-    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
-        // Kontrola duplicity uživatelského jména a emailu
-        if (userRepository.existsByUsername(user.getUsername())) {
-            return ResponseEntity.badRequest().body(null);
-        }
-        if (userRepository.existsByEmail(user.getEmail())) {
-            return ResponseEntity.badRequest().body(null);
-        }
-
-        // Hashování hesla
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        User savedUser = userRepository.save(user);
-        return ResponseEntity.ok(savedUser);
+    @GetMapping("/login")
+    public String showLoginPage() {
+        return "login"; // Zajistí, že se zobrazí login.html v `templates/`
     }
 
+    /**
+     * Získá uživatele podle ID.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        return userRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<User> user = userService.findById(id);
+        return user.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Vytvoří nového uživatele přes REST API.
+     */
+    @PostMapping
+    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
+        try {
+            User savedUser = userService.registerUser(user.getUsername(), user.getPassword(), user.getEmail(), Role.ROLE_USER);
+            return ResponseEntity.ok(savedUser);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    /**
+     * Aktualizuje existujícího uživatele.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody User updatedUser) {
-        return userRepository.findById(id).map(user -> {
-            user.setUsername(updatedUser.getUsername());
-            user.setPassword(passwordEncoder.encode(updatedUser.getPassword())); // Hashování hesla
-            user.setEmail(updatedUser.getEmail());
-            User savedUser = userRepository.save(user);
+        try {
+            User savedUser = userService.updateUser(id, updatedUser);
             return ResponseEntity.ok(savedUser);
-        }).orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        if (!userRepository.existsById(id)) {
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
-        userRepository.deleteById(id);
+    }
+
+    /**
+     * Smaže uživatele podle ID.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        if (!userService.deleteUser(id)) {
+            return ResponseEntity.notFound().build();
+        }
         return ResponseEntity.noContent().build();
     }
 
-    //FRONTEND
-
-    @GetMapping("/users")
+    /**
+     * Zobrazí seznam uživatelů pro frontend.
+     */
+    @GetMapping("/list")
     public String showUsers(Model model) {
-        model.addAttribute("users", userRepository.findAll());
+        model.addAttribute("users", userService.getAllUsers());
         return "users";
     }
 
-    @GetMapping("/users/new")
-    public String showCreateUserForm() {
-        return "create_user";
+    /**
+     * Zobrazí formulář pro vytvoření nového uživatele.
+     */
+    @GetMapping("/new")
+    public String showCreateUserForm(Model model) {
+        model.addAttribute("user", new User());
+        return "new_user";
     }
 
-    @PostMapping("/users")
+    /**
+     * Zpracuje vytvoření uživatele z formuláře.
+     */
+    @PostMapping("/new")
     public String createUser(@RequestParam String username,
                              @RequestParam String email,
                              @RequestParam String password) {
-        User user = new User();
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
-        userRepository.save(user);
+        try {
+            userService.registerUser(username, password, email, Role.ROLE_USER);
+        } catch (IllegalArgumentException e) {
+            return "redirect:/users/new?error=true";
+        }
+        return "redirect:/users";
+    }
+
+    /**
+     * Přidá cíl konkrétnímu uživateli.
+     */
+    @PostMapping("/{userId}/add-goal")
+    public String assignGoalToUser(@PathVariable Long userId, @RequestParam Long goalId) {
+        Goal goal = goalService.findById(goalId)
+                .orElseThrow(() -> new IllegalArgumentException("Cíl nenalezen."));
+        userService.assignGoalToUser(userId, goal);
+        return "redirect:/users";
+    }
+
+    /**
+     * Odebere cíl od uživatele.
+     */
+    @PostMapping("/{userId}/remove-goal/{goalId}")
+    public String removeGoalFromUser(@PathVariable Long userId, @PathVariable Long goalId) {
+        userService.removeGoalFromUser(userId, goalId);
         return "redirect:/users";
     }
 }

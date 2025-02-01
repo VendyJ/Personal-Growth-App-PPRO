@@ -1,11 +1,29 @@
 <!DOCTYPE html>
-<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout.html}">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <title>Tady bude list cílů</title>
+  <title>Seznam cílů</title>
 </head>
 <body>
-<section layout:fragment="content">
-</section>
+<h1>Seznam cílů</h1>
+
+<!-- Formulář pro přidání nového cíle -->
+<form th:action="@{/goals/add}" th:object="${goal}" method="post">
+  <label for="name">Název cíle:</label>
+  <input type="text" id="name" name="name" th:field="*{name}" required />
+  <button type="submit">Přidat</button>
+</form>
+
+<hr>
+
+<!-- Seznam existujících cílů -->
+<ul>
+  <li th:each="goal : ${goals}">
+    <span th:text="${goal.name}"></span> <!-- Změněno z title na name -->
+    <a th:href="@{/goals/edit/{id}(id=${goal.id})}">Editovat</a>
+    <a th:href="@{/goals/delete/{id}(id=${goal.id})}">Smazat</a>
+  </li>
+</ul>
+
+<a href="/">Zpět na hlavní stránku</a>
 </body>
 </html>

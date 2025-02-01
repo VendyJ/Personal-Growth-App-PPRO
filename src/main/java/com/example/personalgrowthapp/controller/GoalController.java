@@ -1,96 +1,83 @@
 package com.example.personalgrowthapp.controller;
 
 import com.example.personalgrowthapp.model.Goal;
+import com.example.personalgrowthapp.service.GoalService;
 import com.example.personalgrowthapp.repository.GoalRepository;
-import com.example.personalgrowthapp.model.User;
-import com.example.personalgrowthapp.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 /**
- * Třída GoalController slouží jako REST kontroler
- * pro správu cílů (Goals). Obsahuje CRUD operace
- * jako vytvoření, čtení, aktualizace a mazání cílů.
+ * Kontroler pro správu cílů.
  */
-@RestController // Označuje třídu jako REST kontroler (vrací data ve formátu JSON)
-@RequestMapping("/api/goals") // Mapuje všechny endpointy tohoto kontroleru na "/api/goals"
+@Controller
+@RequestMapping("/goals")
 public class GoalController {
+    private final GoalService goalService;;
 
-    @Autowired // Automatické injektování repository třídy pro práci s databází
-    private GoalRepository goalRepository;
-    @Autowired // Automatické injektování repository třídy pro práci s databází
-    private UserRepository userRepository;
-
-    /**
-     * Metoda pro získání všech cílů z databáze.
-     *
-     * @return seznam všech cílů (List<Goal>)
-     */
-    @GetMapping // HTTP GET endpoint na "/api/goals"
-    public List<Goal> getAllGoals() {
-        return goalRepository.findAll(); // Vrátí všechny cíle uložené v databázi
+    public GoalController(GoalService goalService) {
+        this.goalService = goalService;
     }
 
     /**
-     * Metoda pro vytvoření nového cíle a jeho uložení do databáze.
-     *
-     * @param goal Nový cíl zaslaný v těle požadavku (JSON)
-     * @return uložený cíl (včetně automaticky generovaného ID)
+     * Zobrazí seznam všech cílů.
      */
-    @PostMapping // HTTP POST endpoint na "/api/goals"
-    public Goal createGoal(@RequestBody Goal goal) {
-        return goalRepository.save(goal); // Uloží cíl do databáze
+    @GetMapping
+    public String listGoals(Model model) {
+        model.addAttribute("goals", goalService.getAllGoals()); // ✅ Použití GoalService místo přímého repository
+        model.addAttribute("goal", new Goal());
+        return "goals-list";
     }
 
     /**
-     * Metoda pro získání jednoho cíle podle jeho ID.
-     *
-     * @param id ID cíle z URL cesty
-     * @return nalezený cíl nebo null, pokud neexistuje
+     * Přidání nového cíle.
      */
-    @GetMapping("/{id}") // HTTP GET endpoint na "/api/goals/{id}"
-    public Goal getGoalById(@PathVariable Long id) {
-        return goalRepository.findById(id).orElse(null); // Vyhledá cíl podle ID, pokud neexistuje, vrátí null
+    @PostMapping("/add")
+    public String addGoal(@RequestParam String name) {
+        goalService.createGoal(name); // ✅ Použití GoalService pro vytvoření cíle
+        System.out.println("Přidán nový cíl: " + name);
+        return "redirect:/goals";
     }
 
     /**
-     * Metoda pro aktualizaci existujícího cíle podle jeho ID.
-     *
-     * @param id ID cíle, který má být aktualizován
-     * @param updatedGoal Aktualizované údaje cíle (JSON)
-     * @return aktualizovaný cíl nebo null, pokud nebyl nalezen
+     * Zobrazení formuláře pro editaci cíle.
      */
-    @PutMapping("/{id}") // HTTP PUT endpoint na "/api/goals/{id}"
-    public Goal updateGoal(@PathVariable Long id, @RequestBody Goal updatedGoal) {
-        return goalRepository.findById(id).map(goal -> {
-            // Aktualizace běžných atributů cíle
-            goal.setTitle(updatedGoal.getTitle());
-            goal.setDescription(updatedGoal.getDescription());
-            goal.setStatus(updatedGoal.getStatus());
-            goal.setStartDate(updatedGoal.getStartDate());
-            goal.setEndDate(updatedGoal.getEndDate());
-
-            // Pokud byl poslán uživatel, pokusíme se ho načíst z databáze
-            if (updatedGoal.getUser() != null && updatedGoal.getUser().getId() != null) {
-                User user = userRepository.findById(updatedGoal.getUser().getId())
-                        .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + updatedGoal.getUser().getId()));
-                goal.setUser(user); // Přiřadíme uživatele cíli
-            }
-
-            return goalRepository.save(goal); // Uložíme cíl s aktualizovanými daty
-        }).orElseThrow(() -> new IllegalArgumentException("Goal not found with id: " + id));
+    @GetMapping("/edit/{id}")
+    public String editGoal(@PathVariable Long id, Model model) {
+        Goal goal = goalService.findById(id).orElse(null);
+        if (goal == null) {
+            return "redirect:/goals"; // Pokud cíl neexistuje, přesměruj na seznam
+        }
+        model.addAttribute("goal", goal);
+        return "edit-goal";
     }
 
     /**
-     * Metoda pro smazání cíle podle jeho ID.
-     *
-     * @param id ID cíle, který má být smazán
+     * Aktualizace existujícího cíle.
      */
-    @DeleteMapping("/{id}") // HTTP DELETE endpoint na "/api/goals/{id}"
-    public void deleteGoal(@PathVariable Long id) {
-        goalRepository.deleteById(id); // Smaže cíl podle jeho ID
+    @PostMapping("/edit/{id}")
+    public String updateGoal(@PathVariable Long id, @RequestParam String name) {
+        goalService.updateGoal(id, name); // ✅ Použití GoalService místo repository
+        return "redirect:/goals";
     }
 
+    /**
+     * Odstranění cíle.
+     */
+    @GetMapping("/delete/{id}")
+    public String deleteGoal(@PathVariable Long id) {
+        goalService.deleteGoal(id); // ✅ Použití GoalService pro odstranění cíle
+        return "redirect:/goals";
+    }
+
+    /**
+     * API pro získání všech cílů (pro frontend).
+     */
+    @GetMapping("/api")
+    public ResponseEntity<List<Goal>> getAllGoals() {
+        return ResponseEntity.ok(goalService.getAllGoals());
+    }
 }

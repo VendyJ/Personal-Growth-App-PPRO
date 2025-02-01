@@ -101,7 +101,7 @@ public class GoalTask {
                 ", description='" + description + '\'' +
                 ", deadline=" + deadline +
                 ", isCompleted=" + isCompleted +
-                ", goal=" + (goal != null ? goal.getTitle() : "No Goal Assigned") +
+                ", goal=" + (goal != null ? goal.getName() : "No Goal Assigned") +
                 '}';
     }
 }

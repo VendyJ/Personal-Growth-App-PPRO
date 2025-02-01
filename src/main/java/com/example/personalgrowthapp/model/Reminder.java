@@ -93,7 +93,7 @@ public class Reminder {
                 ", message='" + message + '\'' +
                 ", reminderTime=" + reminderTime +
                 ", user=" + (user != null ? user.getUsername() : "null") +
-                ", goal=" + (goal != null ? goal.getTitle() : "null") +
+                ", goal=" + (goal != null ? goal.getName() : "null") +
                 '}';
     }
 }

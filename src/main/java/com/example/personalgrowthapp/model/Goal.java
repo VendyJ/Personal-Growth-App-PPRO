@@ -1,9 +1,8 @@
 package com.example.personalgrowthapp.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import com.example.personalgrowthapp.model.GoalTask;
-import org.springframework.scheduling.config.Task;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -23,7 +22,7 @@ public class Goal {
 
     @NotNull
     @Size(max = 255)
-    private String title;
+    private String name;
 
     @Column(length = 1000)
     private String description;
@@ -40,8 +39,10 @@ public class Goal {
     @FutureOrPresent
     private LocalDate endDate;
 
+    // ✅ Vztah M:1 mezi cílem a uživatelem (každý cíl patří jednomu uživateli, ale uživatel může mít více cílů)
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
+    @JsonBackReference //zabrání cyklické serializaci
     private User user;
 
     @OneToMany(mappedBy = "goal", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -55,8 +56,8 @@ public class Goal {
 
     public Goal() {}
 
-    public Goal(String title, String description, GoalStatus status, LocalDate startDate, LocalDate endDate, User user) {
-        this.title = title;
+    public Goal(String name, String description, GoalStatus status, LocalDate startDate, LocalDate endDate, User user) {
+        this.name = name;
         this.description = description;
         this.status = status;
         this.startDate = startDate;
@@ -64,7 +65,7 @@ public class Goal {
         this.user = user;
     }
 
-    // Gettery a settery
+    // ✅ GETTERY A SETTERY
 
     public Long getId() {
         return id;
@@ -74,12 +75,12 @@ public class Goal {
         this.id = id;
     }
 
-    public String getTitle() {
-        return title;
+    public String getName() {
+        return name;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getDescription() {
@@ -122,6 +123,25 @@ public class Goal {
         this.user = user;
     }
 
+
+    /**
+     * Přidá uživatele k cíli.
+     */
+    public void assignUser(User user) {
+        this.user = user;
+        user.getGoals().add(this);
+    }
+
+    /**
+     * Odebere uživatele z cíle.
+     */
+    public void removeUser() {
+        if (this.user != null) {
+            this.user.getGoals().remove(this);
+            this.user = null;
+        }
+    }
+
     public List<Reminder> getReminders() {
         return reminders;
     }
@@ -150,7 +170,7 @@ public class Goal {
     public String toString() {
         return "Goal{" +
                 "id=" + id +
-                ", title='" + title + '\'' +
+                ", title='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", status=" + status +
                 ", startDate=" + startDate +
